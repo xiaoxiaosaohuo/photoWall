@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>SVG01</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>宠物照片墙</title>
+<style>
+* {margin:0; padding:0;}
+
+#ul {width:660px; position:relative; margin:10px auto;}
+#ul li {width:200px; height:150px; float:left; list-style:none; margin:10px; z-index:1;}
+#ul .active {border:1px dashed red;}
+img{width:200px;height:150px}
+</style>
+</head>
+
+<body>
+<ul id="ul">
+	<li><img src="images/1.jpg" /></li>
+	<li><img src="images/2.jpg" /></li>
+	<li><img src="images/3.jpg" /></li>
+	<li><img src="images/4.jpg" /></li>
+	<li><img src="images/5.jpg" /></li>
+	<li><img src="images/6.jpg" /></li>
+	<li><img src="images/7.jpg" /></li>
+	<li><img src="images/8.jpg" /></li>
+	<li><img src="images/9.jpg" /></li>
+	
+</ul>
+<script src="./js/move.js"></script>
+<script>
+window.onload=function ()
+{
+	var UL=document.getElementById('ul');
+	var Li=UL.getElementsByTagName('li');
+	var Pos=[];//存放位置信息
+	var minZindex=2;
+	var i=0;
+	
+	//布局转换
+	for(i=0;i<Li.length;i++)
+	{
+		Pos[i]={left: Li[i].offsetLeft, top: Li[i].offsetTop};
+	}
+	
+	for(i=0;i<Li.length;i++)
+	{
+		Li[i].style.left=Pos[i].left+'px';
+		Li[i].style.top=Pos[i].top+'px';
+		
+		Li[i].style.position='absolute';
+		Li[i].style.margin='0';
+		
+		Li[i].index=i;
+	}
+	
+	//拖拽
+	for(i=0;i<Li.length;i++)
+	{
+		drag(Li[i]);
+	}
+	
+	function drag(obj)
+	{
+		obj.onmousedown=function (ev)
+		{
+			var oEvent=ev||event;
+			
+			obj.style.zIndex=minZindex++;
+			
+			var disX=oEvent.clientX-obj.offsetLeft;
+			var disY=oEvent.clientY-obj.offsetTop;
+			
+			document.onmousemove=function (ev)
+			{
+				var oEvent=ev||event;
+				
+				obj.style.left=oEvent.clientX-disX+'px';
+				obj.style.top=oEvent.clientY-disY+'px';
+				
+				for(i=0;i<Li.length;i++)
+				{
+					Li[i].className='';
+				}
+				
+				var nearest=findNearest(obj);
+				
+				if(nearest)
+				{
+					nearest.className='active';
+				}
+				
+			
+			};
+			
+			document.onmouseup=function ()
+			{
+				document.onmousemove=null;
+				document.onmouseup=null;
+				
+				var nearest=findNearest(obj);
+				
+				if(nearest)
+				{
+					
+					nearest.className='';
+					
+					nearest.style.zIndex=minZindex++;
+					obj.style.zIndex=minZindex++;
+					
+					startMove(nearest, Pos[obj.index]);
+					startMove(obj, Pos[nearest.index]);
+					
+					var tmp=0;
+					//交换二者的索引值
+					tmp=obj.index;
+					obj.index=nearest.index;
+					nearest.index=tmp;
+				}
+				else
+				{
+					startMove(obj, Pos[obj.index]);
+				}
+			};
+			
+			clearInterval(obj.timer);
+			
+			return false;
+		};
+	}
+	
+	//碰撞检测，
+	function collide(obj1, obj2)
+	{
+		var l1=obj1.offsetLeft;
+		var r1=obj1.offsetLeft+obj1.offsetWidth;
+		var t1=obj1.offsetTop;
+		var b1=obj1.offsetTop+obj1.offsetHeight;
+		
+		var l2=obj2.offsetLeft;
+		var r2=obj2.offsetLeft+obj2.offsetWidth;
+		var t2=obj2.offsetTop;
+		var b2=obj2.offsetTop+obj2.offsetHeight;
+		
+		if(r1<l2 || l1>r2 || b1<t2 || t1>b2)
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+	
+	function getDistance(obj1, obj2)
+	{
+		var a=obj1.offsetLeft-obj2.offsetLeft;
+		var b=obj1.offsetTop-obj2.offsetTop;
+		
+		return Math.sqrt(a*a+b*b);
+	}
+	
+	function findNearest(obj)	//找到碰上之后最近的
+	{
+		var minDis=999999999;
+		var minIndex=-1;
+		
+		for(i=0;i<Li.length;i++)
+		{
+			if(obj==Li[i])continue;
+			
+			if(collide(obj, Li[i]))
+			{
+				var dis=getDistance(obj, Li[i]);
+				
+				if(minDis>dis)
+				{
+					minDis=dis;
+					minIndex=i;
+				}
+			}
+		}
+		
+		if(minIndex==-1)
+		{
+			return null;
+		}
+		else
+		{
+			return Li[minIndex];
+		}
+	}
+	
+	
+	
+};
+</script>
+</body>
+</html>
